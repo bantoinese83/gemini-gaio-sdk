@@ -1,5 +1,6 @@
 import { BaseGenAIService } from "./BaseGenAIService";
-import { GenerateTextParams, GenerateTextResult } from "./types";
+import { GenerateTextParams, GenerateTextResult } from "../types/types";
+import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
 
 /**
  * Service for text generation and chat using Gemini API.
@@ -19,7 +20,16 @@ export class TextService extends BaseGenAIService {
    * @returns The Gemini API response (raw)
    */
   async generateText({ model, contents, config }: GenerateTextParams): Promise<GenerateTextResult> {
-    return await this.genAI.models.generateContent({ model, contents, config });
+    try {
+      if (!model || !contents) {
+        Logger.error('TextService.generateText: Missing required params', { model, contents });
+        throw new ValidationError('model and contents are required');
+      }
+      return await this.genAI.models.generateContent({ model, contents, config });
+    } catch (err) {
+      Logger.error('TextService.generateText error', err);
+      throw new GeminiApiError('Failed to generate text', err);
+    }
   }
 
   /**
@@ -28,7 +38,16 @@ export class TextService extends BaseGenAIService {
    * @returns The Gemini API response stream (raw)
    */
   async generateTextStream({ model, contents, config }: GenerateTextParams): Promise<GenerateTextResult> {
-    return await this.genAI.models.generateContentStream({ model, contents, config });
+    try {
+      if (!model || !contents) {
+        Logger.error('TextService.generateTextStream: Missing required params', { model, contents });
+        throw new ValidationError('model and contents are required');
+      }
+      return await this.genAI.models.generateContentStream({ model, contents, config });
+    } catch (err) {
+      Logger.error('TextService.generateTextStream error', err);
+      throw new GeminiApiError('Failed to generate text stream', err);
+    }
   }
 
   /**
@@ -38,6 +57,15 @@ export class TextService extends BaseGenAIService {
    * @returns The chat session object
    */
   createChat(model: string, history?: any[]): any {
-    return this.genAI.chats.create({ model, history });
+    try {
+      if (!model) {
+        Logger.error('TextService.createChat: Missing required param model', { model });
+        throw new ValidationError('model is required');
+      }
+      return this.genAI.chats.create({ model, history });
+    } catch (err) {
+      Logger.error('TextService.createChat error', err);
+      throw new GeminiApiError('Failed to create chat session', err);
+    }
   }
 } 

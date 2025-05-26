@@ -1,6 +1,7 @@
 import { BaseGenAIService } from "./BaseGenAIService";
-import { ResponseParser } from "./ResponseParser";
-import { ExecuteCodeParams, ExecuteCodeResult } from "./types";
+import { ResponseParser } from "../utils/ResponseParser";
+import { ExecuteCodeParams, ExecuteCodeResult } from "../types/types";
+import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
 
 /**
  * Service for enabling code execution via Gemini API (Python only).
@@ -27,14 +28,23 @@ export class CodeExecutionService extends BaseGenAIService {
     prompt,
     config = {},
   }: ExecuteCodeParams): Promise<ExecuteCodeResult> {
-    const contents = Array.isArray(prompt) ? prompt : [prompt];
-    const response = await this.genAI.models.generateContent({
-      model,
-      contents,
-      config: { ...config, tools: [{ codeExecution: {} }] },
-    });
-    const parts = response?.candidates?.[0]?.content?.parts || [];
-    return ResponseParser.parseAll(parts);
+    try {
+      if (!model || !prompt) {
+        Logger.error('CodeExecutionService.executeCode: Missing required params', { model, prompt });
+        throw new ValidationError('model and prompt are required');
+      }
+      const contents = Array.isArray(prompt) ? prompt : [prompt];
+      const response = await this.genAI.models.generateContent({
+        model,
+        contents,
+        config: { ...config, tools: [{ codeExecution: {} }] },
+      });
+      const parts = response?.candidates?.[0]?.content?.parts || [];
+      return ResponseParser.parseAll(parts);
+    } catch (err) {
+      Logger.error('CodeExecutionService.executeCode error', err);
+      throw new GeminiApiError('Failed to execute code', err);
+    }
   }
 
   /**
@@ -56,14 +66,23 @@ export class CodeExecutionService extends BaseGenAIService {
     message: string,
     config?: any,
   }): Promise<ExecuteCodeResult> {
-    const chat = this.genAI.chats.create({
-      model,
-      history,
-      config: { ...config, tools: [{ codeExecution: {} }] },
-    });
-    const response = await chat.sendMessage({ message });
-    const parts = response?.candidates?.[0]?.content?.parts || [];
-    return ResponseParser.parseAll(parts);
+    try {
+      if (!model || !history || !message) {
+        Logger.error('CodeExecutionService.executeCodeChat: Missing required params', { model, history, message });
+        throw new ValidationError('model, history, and message are required');
+      }
+      const chat = this.genAI.chats.create({
+        model,
+        history,
+        config: { ...config, tools: [{ codeExecution: {} }] },
+      });
+      const response = await chat.sendMessage({ message });
+      const parts = response?.candidates?.[0]?.content?.parts || [];
+      return ResponseParser.parseAll(parts);
+    } catch (err) {
+      Logger.error('CodeExecutionService.executeCodeChat error', err);
+      throw new GeminiApiError('Failed to execute code chat', err);
+    }
   }
 }
 

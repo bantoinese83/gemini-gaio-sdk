@@ -109,4 +109,32 @@ export interface SummarizeMultipleParams {
   docs: Array<{ file: any; displayName: string; isUrl?: boolean; mimeType?: string }>;
   prompt: string;
 }
-export type SummarizeResult = string; 
+export type SummarizeResult = string;
+
+// Shared/common types
+export type ModelName = string;
+export type ContentPart = string | GeminiTextPart | GeminiInlineDataPart | GeminiExecutableCodePart | GeminiCodeExecutionResultPart | { [key: string]: unknown };
+export type ContentArray = ContentPart[];
+export interface ModelConfig {
+  [key: string]: unknown;
+}
+export interface FileReference {
+  uri?: string;
+  mimeType?: string;
+}
+export interface ApiResponse<T = unknown> {
+  text?: string;
+  candidates?: T[];
+  [key: string]: unknown;
+}
+export interface StreamingCallbacks {
+  onopen?: () => void;
+  onmessage?: (message: unknown) => void;
+  onerror?: (e: unknown) => void;
+  onclose?: (e: unknown) => void;
+}
+export interface LiveSession {
+  sendClientContent: (args: unknown) => Promise<void>;
+  sendRealtimeInput: (args: unknown) => Promise<void>;
+  close: () => Promise<void>;
+} 

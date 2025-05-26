@@ -1,5 +1,6 @@
 import { BaseGenAIService } from "./BaseGenAIService";
 import { Type } from "@google/genai";
+import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
 
 export class StructuredOutputService extends BaseGenAIService {
   constructor(apiKey: string) {
@@ -26,15 +27,21 @@ export class StructuredOutputService extends BaseGenAIService {
       [key: string]: any,
     },
   }): Promise<string> {
-    if (!config.responseMimeType || !config.responseSchema) {
-      throw new Error("generateStructuredOutput requires responseMimeType and responseSchema in the config.");
+    try {
+      if (!model || !contents || !config || !config.responseMimeType || !config.responseSchema) {
+        Logger.error('StructuredOutputService.generateStructuredOutput: Missing required params', { model, contents, config });
+        throw new ValidationError('model, contents, responseMimeType, and responseSchema are required');
+      }
+      const response = await this.genAI.models.generateContent({
+        model,
+        contents,
+        config,
+      });
+      return response.text ?? '';
+    } catch (err) {
+      Logger.error('StructuredOutputService.generateStructuredOutput error', err);
+      throw new GeminiApiError('Failed to generate structured output', err);
     }
-    const response = await this.genAI.models.generateContent({
-      model,
-      contents,
-      config,
-    });
-    return response.text ?? '';
   }
 
   /**

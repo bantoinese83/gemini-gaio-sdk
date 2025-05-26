@@ -1,4 +1,7 @@
 import { BaseGenAIService } from "./BaseGenAIService";
+import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
+import { StreamingCallbacks, LiveSession, ModelConfig } from "../types/types";
+import { Modality } from "@google/genai";
 
 export class LiveApiService extends BaseGenAIService {
   constructor(apiKey: string) {
@@ -20,25 +23,29 @@ export class LiveApiService extends BaseGenAIService {
     config = {},
   }: {
     model?: string,
-    responseModality?: 'TEXT' | 'AUDIO',
-    callbacks: {
-      onopen?: () => void,
-      onmessage?: (message: any) => void,
-      onerror?: (e: any) => void,
-      onclose?: (e: any) => void,
-    },
-    config?: any,
-  }) {
-    return await this.genAI.live.connect({
-      model,
-      callbacks: {
-        onopen: callbacks.onopen,
-        onmessage: callbacks.onmessage as any,
-        onerror: callbacks.onerror,
-        onclose: callbacks.onclose,
-      },
-      config: { responseModalities: [responseModality], ...config },
-    });
+    responseModality?: string,
+    callbacks: StreamingCallbacks,
+    config?: ModelConfig,
+  }): Promise<any> {
+    try {
+      if (!model || !callbacks) {
+        Logger.error('LiveApiService.connectSession: Missing required params', { model, callbacks });
+        throw new ValidationError('model and callbacks are required');
+      }
+      return await this.genAI.live.connect({
+        model,
+        callbacks: {
+          onopen: callbacks.onopen,
+          onmessage: callbacks.onmessage as any,
+          onerror: callbacks.onerror,
+          onclose: callbacks.onclose,
+        },
+        config: { responseModalities: [Modality[responseModality as keyof typeof Modality]], ...config },
+      });
+    } catch (err) {
+      Logger.error('LiveApiService.connectSession error', err);
+      throw new GeminiApiError('Failed to connect to live session', err);
+    }
   }
 
   /**
@@ -46,8 +53,17 @@ export class LiveApiService extends BaseGenAIService {
    * @param session The live session object.
    * @param text The text to send.
    */
-  async sendText(session: any, text: string) {
-    await session.sendClientContent({ turns: text });
+  async sendText(session: any, text: string): Promise<void> {
+    try {
+      if (!session || !text) {
+        Logger.error('LiveApiService.sendText: Missing required params', { session, text });
+        throw new ValidationError('session and text are required');
+      }
+      await session.sendClientContent({ turns: text });
+    } catch (err) {
+      Logger.error('LiveApiService.sendText error', err);
+      throw new GeminiApiError('Failed to send text to live session', err);
+    }
   }
 
   /**
@@ -55,20 +71,38 @@ export class LiveApiService extends BaseGenAIService {
    * @param session The live session object.
    * @param base64Audio The base64-encoded audio data.
    */
-  async sendAudio(session: any, base64Audio: string) {
-    await session.sendRealtimeInput({
-      audio: {
-        data: base64Audio,
-        mimeType: 'audio/pcm;rate=16000',
-      },
-    });
+  async sendAudio(session: any, base64Audio: string): Promise<void> {
+    try {
+      if (!session || !base64Audio) {
+        Logger.error('LiveApiService.sendAudio: Missing required params', { session, base64Audio });
+        throw new ValidationError('session and base64Audio are required');
+      }
+      await session.sendRealtimeInput({
+        audio: {
+          data: base64Audio,
+          mimeType: 'audio/pcm;rate=16000',
+        },
+      });
+    } catch (err) {
+      Logger.error('LiveApiService.sendAudio error', err);
+      throw new GeminiApiError('Failed to send audio to live session', err);
+    }
   }
 
   /**
    * Close a Live API session.
    * @param session The session object.
    */
-  async closeSession(session: any) {
-    await session.close();
+  async closeSession(session: any): Promise<void> {
+    try {
+      if (!session) {
+        Logger.error('LiveApiService.closeSession: Missing required param session', { session });
+        throw new ValidationError('session is required');
+      }
+      await session.close();
+    } catch (err) {
+      Logger.error('LiveApiService.closeSession error', err);
+      throw new GeminiApiError('Failed to close live session', err);
+    }
   }
 } 

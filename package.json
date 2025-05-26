@@ -1,8 +1,20 @@
 {
-  "name": "gemini-sdk-service",
+  "name": "gemini-gaio",
   "version": "1.0.0",
   "description": "A Gemini API service using @google/genai",
-  "main": "gemini-service.ts",
+  "main": "dist/gemini-service.js",
+  "types": "dist/gemini-service.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "author": "Bryan Antoine B.antoine.se@gmail.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bantoinese83/gemini-gaio-sdk.git"
+  },
   "type": "module",
   "scripts": {
     "build": "tsc",

@@ -2,6 +2,7 @@
  * Service for URL context and Google Search grounding using Gemini API.
  */
 import { BaseGenAIService } from "./BaseGenAIService";
+import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
 
 export class UrlContextService extends BaseGenAIService {
   /**
@@ -26,19 +27,27 @@ export class UrlContextService extends BaseGenAIService {
     contents: string | any[],
     config?: any,
   }): Promise<{ text: string, urlContextMetadata?: any, rawResponse: any }> {
-    const response = await this.genAI.models.generateContent({
-      model,
-      contents,
-      config: { ...config, tools: [{ urlContext: {} }] },
-    });
-    // urlContextMetadata may be in metadata or directly on the candidate, depending on API version
-    const candidate = response.candidates?.[0] as any; // Type assertion to any to avoid TS linter errors
-    const urlContextMetadata = candidate?.metadata?.urlContextMetadata || candidate?.urlContextMetadata;
-    return {
-      text: response.text ?? '',
-      urlContextMetadata,
-      rawResponse: response,
-    };
+    try {
+      if (!model || !contents) {
+        Logger.error('UrlContextService.generateWithUrlContext: Missing required params', { model, contents });
+        throw new ValidationError('model and contents are required');
+      }
+      const response = await this.genAI.models.generateContent({
+        model,
+        contents,
+        config: { ...config, tools: [{ urlContext: {} }] },
+      });
+      const candidate = response.candidates?.[0] as any;
+      const urlContextMetadata = candidate?.metadata?.urlContextMetadata || candidate?.urlContextMetadata;
+      return {
+        text: response.text ?? '',
+        urlContextMetadata,
+        rawResponse: response,
+      };
+    } catch (err) {
+      Logger.error('UrlContextService.generateWithUrlContext error', err);
+      throw new GeminiApiError('Failed to generate with URL context', err);
+    }
   }
 
   /**
@@ -55,18 +64,26 @@ export class UrlContextService extends BaseGenAIService {
     contents: string | any[],
     config?: any,
   }): Promise<{ text: string, urlContextMetadata?: any, rawResponse: any }> {
-    const response = await this.genAI.models.generateContent({
-      model,
-      contents,
-      config: { ...config, tools: [{ urlContext: {} }, { googleSearch: {} }] },
-    });
-    // urlContextMetadata may be in metadata or directly on the candidate, depending on API version
-    const candidate = response.candidates?.[0] as any; // Type assertion to any to avoid TS linter errors
-    const urlContextMetadata = candidate?.metadata?.urlContextMetadata || candidate?.urlContextMetadata;
-    return {
-      text: response.text ?? '',
-      urlContextMetadata,
-      rawResponse: response,
-    };
+    try {
+      if (!model || !contents) {
+        Logger.error('UrlContextService.generateWithUrlContextAndSearch: Missing required params', { model, contents });
+        throw new ValidationError('model and contents are required');
+      }
+      const response = await this.genAI.models.generateContent({
+        model,
+        contents,
+        config: { ...config, tools: [{ urlContext: {} }, { googleSearch: {} }] },
+      });
+      const candidate = response.candidates?.[0] as any;
+      const urlContextMetadata = candidate?.metadata?.urlContextMetadata || candidate?.urlContextMetadata;
+      return {
+        text: response.text ?? '',
+        urlContextMetadata,
+        rawResponse: response,
+      };
+    } catch (err) {
+      Logger.error('UrlContextService.generateWithUrlContextAndSearch error', err);
+      throw new GeminiApiError('Failed to generate with URL context and search', err);
+    }
   }
 } 

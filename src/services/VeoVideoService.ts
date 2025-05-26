@@ -1,6 +1,7 @@
 import { BaseGenAIService } from "./BaseGenAIService";
 import { createWriteStream } from "fs";
 import { Readable } from "stream";
+import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
 
 export class VeoVideoService extends BaseGenAIService {
   constructor(apiKey: string) {
@@ -29,23 +30,32 @@ export class VeoVideoService extends BaseGenAIService {
       negativePrompt?: string,
       enhancePrompt?: boolean,
     },
-    apiKey?: string, // Optionally override API key for download
+    apiKey?: string,
   }): Promise<string[]> {
-    // @ts-expect-error: generateVideos is not in the public type yet
-    let operation = await this.genAI.models.generateVideos({
-      model,
-      prompt,
-      config: options,
-    });
-    while (!operation.done) {
-      await new Promise((resolve) => setTimeout(resolve, 10000));
-      // @ts-expect-error: operations is not in the public type yet
-      operation = await this.genAI.operations.getVideosOperation({ operation });
+    try {
+      if (!prompt) {
+        Logger.error('VeoVideoService.generateVideoFromText: Missing required param prompt', { prompt });
+        throw new ValidationError('prompt is required');
+      }
+      // @ts-expect-error: generateVideos is not in the public type yet
+      let operation = await this.genAI.models.generateVideos({
+        model,
+        prompt,
+        config: options,
+      });
+      while (!operation.done) {
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+        // @ts-expect-error: operations is not in the public type yet
+        operation = await this.genAI.operations.getVideosOperation({ operation });
+      }
+      const key = apiKey || process.env.GEMINI_API_KEY;
+      return (operation.response?.generatedVideos || []).map(
+        (v: any) => `${v.video?.uri}${key ? `&key=${key}` : ""}`
+      );
+    } catch (err) {
+      Logger.error('VeoVideoService.generateVideoFromText error', err);
+      throw new GeminiApiError('Failed to generate video from text', err);
     }
-    const key = apiKey || process.env.GEMINI_API_KEY;
-    return (operation.response?.generatedVideos || []).map(
-      (v: any) => `${v.video?.uri}${key ? `&key=${key}` : ""}`
-    );
   }
 
   /**
@@ -78,25 +88,34 @@ export class VeoVideoService extends BaseGenAIService {
     },
     apiKey?: string,
   }): Promise<string[]> {
-    // @ts-expect-error: generateVideos is not in the public type yet
-    let operation = await this.genAI.models.generateVideos({
-      model,
-      prompt,
-      image: {
-        imageBytes,
-        mimeType,
-      },
-      config: options,
-    });
-    while (!operation.done) {
-      await new Promise((resolve) => setTimeout(resolve, 10000));
-      // @ts-expect-error: operations is not in the public type yet
-      operation = await this.genAI.operations.getVideosOperation({ operation });
+    try {
+      if (!prompt || !imageBytes) {
+        Logger.error('VeoVideoService.generateVideoFromImage: Missing required params', { prompt, imageBytes });
+        throw new ValidationError('prompt and imageBytes are required');
+      }
+      // @ts-expect-error: generateVideos is not in the public type yet
+      let operation = await this.genAI.models.generateVideos({
+        model,
+        prompt,
+        image: {
+          imageBytes,
+          mimeType,
+        },
+        config: options,
+      });
+      while (!operation.done) {
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+        // @ts-expect-error: operations is not in the public type yet
+        operation = await this.genAI.operations.getVideosOperation({ operation });
+      }
+      const key = apiKey || process.env.GEMINI_API_KEY;
+      return (operation.response?.generatedVideos || []).map(
+        (v: any) => `${v.video?.uri}${key ? `&key=${key}` : ""}`
+      );
+    } catch (err) {
+      Logger.error('VeoVideoService.generateVideoFromImage error', err);
+      throw new GeminiApiError('Failed to generate video from image', err);
     }
-    const key = apiKey || process.env.GEMINI_API_KEY;
-    return (operation.response?.generatedVideos || []).map(
-      (v: any) => `${v.video?.uri}${key ? `&key=${key}` : ""}`
-    );
   }
 
   /**
@@ -104,13 +123,22 @@ export class VeoVideoService extends BaseGenAIService {
    * @param uri Video URI (with API key appended).
    * @param filename Output filename (e.g., 'video0.mp4').
    */
-  async downloadVideo(uri: string, filename: string) {
-    const resp = await fetch(uri);
-    const writer = createWriteStream(filename);
-    (Readable as any).fromWeb(resp.body).pipe(writer);
-    return new Promise<void>((resolve, reject) => {
-      writer.on('finish', () => resolve());
-      writer.on('error', reject);
-    });
+  async downloadVideo(uri: string, filename: string): Promise<void> {
+    try {
+      if (!uri || !filename) {
+        Logger.error('VeoVideoService.downloadVideo: Missing required params', { uri, filename });
+        throw new ValidationError('uri and filename are required');
+      }
+      const resp = await fetch(uri);
+      const writer = createWriteStream(filename);
+      (Readable as any).fromWeb(resp.body).pipe(writer);
+      return new Promise<void>((resolve, reject) => {
+        writer.on('finish', () => resolve());
+        writer.on('error', reject);
+      });
+    } catch (err) {
+      Logger.error('VeoVideoService.downloadVideo error', err);
+      throw new GeminiApiError('Failed to download video', err);
+    }
   }
 } 

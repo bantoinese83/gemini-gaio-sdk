@@ -39,4 +39,45 @@ export class Logger {
   static error(...args: any[]) {
     if (Logger.enabled) console.error('[GeminiSDK][ERROR]', ...args);
   }
+}
+
+/**
+ * Base error class for all Gemini SDK errors.
+ */
+export class GeminiError extends Error {
+  constructor(message: string, public cause?: any) {
+    super(message);
+    this.name = 'GeminiError';
+    if (cause) this.stack += '\nCaused by: ' + (cause.stack || cause);
+  }
+}
+
+/**
+ * Error thrown for Gemini API failures.
+ */
+export class GeminiApiError extends GeminiError {
+  constructor(message: string, cause?: any) {
+    super(message, cause);
+    this.name = 'GeminiApiError';
+  }
+}
+
+/**
+ * Error thrown for file upload/processing failures.
+ */
+export class FileProcessingError extends GeminiError {
+  constructor(message: string, cause?: any) {
+    super(message, cause);
+    this.name = 'FileProcessingError';
+  }
+}
+
+/**
+ * Error thrown for invalid arguments or validation failures.
+ */
+export class ValidationError extends GeminiError {
+  constructor(message: string, cause?: any) {
+    super(message, cause);
+    this.name = 'ValidationError';
+  }
 } 

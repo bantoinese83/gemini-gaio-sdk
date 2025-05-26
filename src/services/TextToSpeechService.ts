@@ -1,4 +1,6 @@
 import { BaseGenAIService } from "./BaseGenAIService";
+import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
+import { GenerateSingleSpeakerSpeechParams, GenerateSingleSpeakerSpeechResult } from "../types/types";
 
 /**
  * Service for text-to-speech (TTS) using Gemini API.
@@ -42,28 +44,31 @@ export class TextToSpeechService extends BaseGenAIService {
    * @param voiceName Prebuilt voice name (see TextToSpeechService.voiceOptions).
    * @returns Audio as Buffer (PCM, base64-decoded).
    */
-  async generateSingleSpeakerSpeech({
-    model,
-    text,
-    voiceName,
-  }: {
-    model: string,
-    text: string,
-    voiceName: string,
-  }): Promise<Buffer> {
-    const contents: any[] = [{ parts: [{ text }] }];
-    const config: any = {
-      responseModalities: ["AUDIO"],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName },
+  async generateSingleSpeakerSpeech(params: GenerateSingleSpeakerSpeechParams): Promise<GenerateSingleSpeakerSpeechResult> {
+    try {
+      const { model, text, voiceName } = params;
+      if (!model || !text || !voiceName) {
+        Logger.error('TextToSpeechService.generateSingleSpeakerSpeech: Missing required params', { model, text, voiceName });
+        throw new ValidationError('model, text, and voiceName are required');
+      }
+      const contents: any[] = [{ parts: [{ text }] }];
+      const config: any = {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName },
+          },
         },
-      },
-    };
-    const response = await this.genAI.models.generateContent({ model, contents, config });
-    const data = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (!data) throw new Error("No audio data returned from TTS.");
-    return Buffer.from(data, "base64");
+      };
+      const response = await this.genAI.models.generateContent({ model, contents, config });
+      const data = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (!data) throw new GeminiApiError("No audio data returned from TTS.", response);
+      return Buffer.from(data, "base64");
+    } catch (err) {
+      Logger.error('TextToSpeechService.generateSingleSpeakerSpeech error', err);
+      if (err instanceof GeminiApiError || err instanceof ValidationError) throw err;
+      throw new GeminiApiError('Failed to generate single-speaker speech', err);
+    }
   }
 
   /**
@@ -73,32 +78,34 @@ export class TextToSpeechService extends BaseGenAIService {
    * @param speakers Array of { speaker, voiceName } for each speaker (see TextToSpeechService.voiceOptions).
    * @returns Audio as Buffer (PCM, base64-decoded).
    */
-  async generateMultiSpeakerSpeech({
-    model,
-    text,
-    speakers,
-  }: {
-    model: string,
-    text: string,
-    speakers: Array<{ speaker: string, voiceName: string }>,
-  }): Promise<Buffer> {
-    const contents: any[] = [{ parts: [{ text }] }];
-    const config: any = {
-      responseModalities: ["AUDIO"],
-      speechConfig: {
-        multiSpeakerVoiceConfig: {
-          speakerVoiceConfigs: speakers.map(s => ({
-            speaker: s.speaker,
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: s.voiceName },
-            },
-          })),
+  async generateMultiSpeakerSpeech({ model, text, speakers }: { model: string, text: string, speakers: Array<{ speaker: string, voiceName: string }> }): Promise<Buffer> {
+    try {
+      if (!model || !text || !speakers || !Array.isArray(speakers) || speakers.length === 0) {
+        Logger.error('TextToSpeechService.generateMultiSpeakerSpeech: Missing required params', { model, text, speakers });
+        throw new ValidationError('model, text, and speakers (non-empty array) are required');
+      }
+      const contents: any[] = [{ parts: [{ text }] }];
+      const config: any = {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          multiSpeakerVoiceConfig: {
+            speakerVoiceConfigs: speakers.map(s => ({
+              speaker: s.speaker,
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: s.voiceName },
+              },
+            })),
+          },
         },
-      },
-    };
-    const response = await this.genAI.models.generateContent({ model, contents, config });
-    const data = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (!data) throw new Error("No audio data returned from TTS.");
-    return Buffer.from(data, "base64");
+      };
+      const response = await this.genAI.models.generateContent({ model, contents, config });
+      const data = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (!data) throw new GeminiApiError("No audio data returned from TTS.", response);
+      return Buffer.from(data, "base64");
+    } catch (err) {
+      Logger.error('TextToSpeechService.generateMultiSpeakerSpeech error', err);
+      if (err instanceof GeminiApiError || err instanceof ValidationError) throw err;
+      throw new GeminiApiError('Failed to generate multi-speaker speech', err);
+    }
   }
 } 
