@@ -143,7 +143,7 @@ graph TD;
 ## 🚀 Installation
 
 ```bash
-npm install @google/genai gemini-gaio
+npm install gemini-gaio
 ```
 
 ---
