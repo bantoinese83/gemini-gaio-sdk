@@ -20,7 +20,7 @@ export class VeoVideoService extends BaseGenAIService {
                 });
                 throw new ValidationError('prompt is required');
             }
-            // @ts-expect-error: generateVideos is not in the public type yet
+            // This uses an unofficial/undocumented API; types may not exist
             let operation = await this.genAI.models.generateVideos({
                 model,
                 prompt,
@@ -28,7 +28,6 @@ export class VeoVideoService extends BaseGenAIService {
             });
             while (!operation.done) {
                 await new Promise((resolve) => setTimeout(resolve, 10000));
-                // @ts-expect-error: operations is not in the public type yet
                 operation = await this.genAI.operations.getVideosOperation({ operation });
             }
             const key = apiKey || process.env.GEMINI_API_KEY;
@@ -56,19 +55,28 @@ export class VeoVideoService extends BaseGenAIService {
                 });
                 throw new ValidationError('prompt and imageBytes are required');
             }
-            // @ts-expect-error: generateVideos is not in the public type yet
+            // If imageBytes is a Buffer, convert to base64 string (API expects string)
+            let imageBytesStr;
+            if (typeof imageBytes === 'string') {
+                imageBytesStr = imageBytes;
+            }
+            else if (Buffer.isBuffer(imageBytes)) {
+                imageBytesStr = imageBytes.toString('base64');
+            }
+            else {
+                throw new ValidationError('imageBytes must be a Buffer or base64 string');
+            }
             let operation = await this.genAI.models.generateVideos({
                 model,
                 prompt,
                 image: {
-                    imageBytes,
+                    imageBytes: imageBytesStr,
                     mimeType,
                 },
                 config: options,
             });
             while (!operation.done) {
                 await new Promise((resolve) => setTimeout(resolve, 10000));
-                // @ts-expect-error: operations is not in the public type yet
                 operation = await this.genAI.operations.getVideosOperation({ operation });
             }
             const key = apiKey || process.env.GEMINI_API_KEY;

@@ -5,6 +5,6 @@ export class BaseGenAIService {
 
   constructor(apiKey: string) {
     if (!apiKey) throw new Error('GEMINI_API_KEY is required for this service.');
-    this.genAI = new GoogleGenAI({ apiKey });
+    this.genAI = new GoogleGenAI({ apiKey, apiVersion: 'v1alpha' });
   }
 }

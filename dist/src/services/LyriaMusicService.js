@@ -20,13 +20,16 @@ export class LyriaMusicService extends BaseGenAIService {
      * @returns The session object for further control.
      */
     connectSession({ onMessage, onError, onClose, model = 'models/lyria-realtime-exp', }) {
+        if (!this.genAI.live || !this.genAI.live.music || typeof this.genAI.live.music.connect !== 'function') {
+            throw new Error('Lyria RealTime is not available. Make sure you are using @google/genai >= 1.0.1 and apiVersion: "v1alpha".');
+        }
         // @ts-expect-error Lyria live.music.connect is not typed in @google/genai
         return this.genAI.live.music.connect({
             model,
             callbacks: {
-                onMessage,
-                onError,
-                onClose,
+                onmessage: onMessage,
+                onerror: onError,
+                onclose: onClose,
             },
         });
     }
