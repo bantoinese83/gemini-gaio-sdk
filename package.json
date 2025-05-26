@@ -1,6 +1,6 @@
 {
   "name": "gemini-gaio",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A Gemini API service using @google/genai",
   "main": "dist/gemini-service.js",
   "types": "dist/gemini-service.d.ts",
