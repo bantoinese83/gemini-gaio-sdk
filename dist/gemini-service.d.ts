@@ -18,7 +18,6 @@ import { FunctionCallingService } from './src/services/FunctionCallingService';
 import { CodeExecutionService } from './src/services/CodeExecutionService';
 import { GeminiModel } from './src/types/models';
 import { Logger } from './src/utils/Logger';
-import * as GeminiTypes from './src/types/types';
 export { TextService } from './src/services/TextService';
 export { ImageService } from './src/services/ImageService';
 export { DocumentService } from './src/services/DocumentService';
@@ -40,26 +39,26 @@ export { CodeExecutionService } from './src/services/CodeExecutionService';
 export { GeminiModel } from './src/types/models';
 export * from './src/types/types';
 export { Logger, GeminiError, GeminiApiError, FileProcessingError, ValidationError, } from './src/utils/Logger';
-export default {
-    TextService,
-    ImageService,
-    DocumentService,
-    AudioService,
-    ThinkingService,
-    VideoService,
-    GroundingService,
-    StructuredOutputService,
-    VeoVideoService,
-    TextToSpeechService,
-    LyriaMusicService,
-    UrlContextService,
-    LiveApiService,
-    ContextCacheService,
-    FilesApiService,
-    TokenService,
-    FunctionCallingService,
-    CodeExecutionService,
-    GeminiModel,
-    Logger,
-    ...GeminiTypes,
+declare const _default: {
+    TextService: typeof TextService;
+    ImageService: typeof ImageService;
+    DocumentService: typeof DocumentService;
+    AudioService: typeof AudioService;
+    ThinkingService: typeof ThinkingService;
+    VideoService: typeof VideoService;
+    GroundingService: typeof GroundingService;
+    StructuredOutputService: typeof StructuredOutputService;
+    VeoVideoService: typeof VeoVideoService;
+    TextToSpeechService: typeof TextToSpeechService;
+    LyriaMusicService: typeof LyriaMusicService;
+    UrlContextService: typeof UrlContextService;
+    LiveApiService: typeof LiveApiService;
+    ContextCacheService: typeof ContextCacheService;
+    FilesApiService: typeof FilesApiService;
+    TokenService: typeof TokenService;
+    FunctionCallingService: typeof FunctionCallingService;
+    CodeExecutionService: typeof CodeExecutionService;
+    GeminiModel: typeof GeminiModel;
+    Logger: typeof Logger;
 };
+export default _default;

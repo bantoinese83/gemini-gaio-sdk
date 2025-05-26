@@ -12,5 +12,5 @@
     "declaration": true,
     "declarationDir": "./dist"
   },
-  "include": ["gemini-service.ts"]
+  "include": ["gemini-service.ts", "index.d.ts"]
 }
