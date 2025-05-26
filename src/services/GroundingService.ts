@@ -1,14 +1,14 @@
 /**
  * Service for Google Search grounding using Gemini API.
  */
-import { BaseGenAIService } from "./BaseGenAIService";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
-import { ModelConfig } from "../types/types";
-import { GroundingMetadata } from "@google/genai";
+import { BaseGenAIService } from './BaseGenAIService';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
+import { ModelConfig } from '../types/types';
+import { GroundingMetadata, Part } from '@google/genai';
 
 export interface GenerateGroundedContentParams {
   model: string;
-  contents: any[];
+  contents: Part[];
   config?: ModelConfig;
 }
 
@@ -26,10 +26,15 @@ export class GroundingService extends BaseGenAIService {
    * @param params { model, contents, config? }
    * @returns { text, groundingMetadata }
    */
-  async generateGroundedContent(params: GenerateGroundedContentParams): Promise<{ text: string, groundingMetadata?: GroundingMetadata }> {
+  async generateGroundedContent(
+    params: GenerateGroundedContentParams,
+  ): Promise<{ text: string; groundingMetadata?: GroundingMetadata }> {
     try {
       if (!params.model || !params.contents) {
-        Logger.error('GroundingService.generateGroundedContent: Missing required params', { model: params.model, contents: params.contents });
+        Logger.error('GroundingService.generateGroundedContent: Missing required params', {
+          model: params.model,
+          contents: params.contents,
+        });
         throw new ValidationError('model and contents are required');
       }
       const response = await this.genAI.models.generateContent({
@@ -60,4 +65,4 @@ export class GroundingService extends BaseGenAIService {
       throw new GeminiApiError('Failed to extract Google Search suggestions', err);
     }
   }
-} 
+}

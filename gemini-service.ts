@@ -40,7 +40,13 @@ export { FunctionCallingService } from './src/services/FunctionCallingService';
 export { CodeExecutionService } from './src/services/CodeExecutionService';
 export { GeminiModel } from './src/types/models';
 export * from './src/types/types';
-export { Logger, GeminiError, GeminiApiError, FileProcessingError, ValidationError } from './src/utils/Logger';
+export {
+  Logger,
+  GeminiError,
+  GeminiApiError,
+  FileProcessingError,
+  ValidationError,
+} from './src/utils/Logger';
 
 export default {
   TextService,
@@ -63,5 +69,5 @@ export default {
   CodeExecutionService,
   GeminiModel,
   Logger,
-  ...GeminiTypes
+  ...GeminiTypes,
 };

@@ -1,9 +1,15 @@
 /**
  * Service for context caching using Gemini API.
  */
-import { createUserContent, createPartFromUri } from "@google/genai";
-import { BaseGenAIService } from "./BaseGenAIService";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
+import {
+  createUserContent,
+  createPartFromUri,
+  CachedContent,
+  Part,
+  GenerateContentResponse,
+} from '@google/genai';
+import { BaseGenAIService } from './BaseGenAIService';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
 
 export class ContextCacheService extends BaseGenAIService {
   /**
@@ -25,19 +31,22 @@ export class ContextCacheService extends BaseGenAIService {
     systemInstruction,
     ttl,
   }: {
-    model: string,
-    fileUris: Array<{ uri: string, mimeType: string }> | { uri: string, mimeType: string },
-    systemInstruction?: string,
-    ttl?: string,
-  }): Promise<any> {
+    model: string;
+    fileUris: Array<{ uri: string; mimeType: string }> | { uri: string; mimeType: string };
+    systemInstruction?: string;
+    ttl?: string;
+  }): Promise<CachedContent> {
     try {
       if (!model || !fileUris) {
-        Logger.error('ContextCacheService.createCache: Missing required params', { model, fileUris });
+        Logger.error('ContextCacheService.createCache: Missing required params', {
+          model,
+          fileUris,
+        });
         throw new ValidationError('model and fileUris are required');
       }
       const files = Array.isArray(fileUris) ? fileUris : [fileUris];
-      const contents = createUserContent(files.map(f => createPartFromUri(f.uri, f.mimeType)));
-      const config: any = { contents };
+      const contents = createUserContent(files.map((f) => createPartFromUri(f.uri, f.mimeType)));
+      const config: Record<string, unknown> = { contents };
       if (systemInstruction) config.systemInstruction = systemInstruction;
       if (ttl) config.ttl = ttl;
       return await this.genAI.caches.create({ model, config });
@@ -52,16 +61,17 @@ export class ContextCacheService extends BaseGenAIService {
    * @param pageSize Number of results per page (default: 10).
    * @returns Array of cache metadata objects.
    */
-  async listCaches(pageSize = 10): Promise<any[]> {
+  async listCaches(pageSize = 10): Promise<CachedContent[]> {
     try {
       const pager = await this.genAI.caches.list({ config: { pageSize } });
       let page = pager.page;
-      const results: any[] = [];
-      while (true) {
+      const results: CachedContent[] = [];
+      do {
         for (const c of page) results.push(c);
-        if (!pager.hasNextPage()) break;
-        page = await pager.nextPage();
-      }
+        if (pager.hasNextPage()) {
+          page = await pager.nextPage();
+        }
+      } while (pager.hasNextPage());
       return results;
     } catch (err) {
       Logger.error('ContextCacheService.listCaches error', err);
@@ -75,10 +85,13 @@ export class ContextCacheService extends BaseGenAIService {
    * @param ttl TTL string (e.g., '7200s' for 2 hours).
    * @returns The updated cache object.
    */
-  async updateCacheTtl(cacheName: string, ttl: string): Promise<any> {
+  async updateCacheTtl(cacheName: string, ttl: string): Promise<CachedContent> {
     try {
       if (!cacheName || !ttl) {
-        Logger.error('ContextCacheService.updateCacheTtl: Missing required params', { cacheName, ttl });
+        Logger.error('ContextCacheService.updateCacheTtl: Missing required params', {
+          cacheName,
+          ttl,
+        });
         throw new ValidationError('cacheName and ttl are required');
       }
       return await this.genAI.caches.update({ name: cacheName, config: { ttl } });
@@ -95,7 +108,9 @@ export class ContextCacheService extends BaseGenAIService {
   async deleteCache(cacheName: string): Promise<void> {
     try {
       if (!cacheName) {
-        Logger.error('ContextCacheService.deleteCache: Missing required param cacheName', { cacheName });
+        Logger.error('ContextCacheService.deleteCache: Missing required param cacheName', {
+          cacheName,
+        });
         throw new ValidationError('cacheName is required');
       }
       await this.genAI.caches.delete({ name: cacheName });
@@ -116,14 +131,18 @@ export class ContextCacheService extends BaseGenAIService {
     cacheName,
     config = {},
   }: {
-    model: string,
-    contents: string | any[],
-    cacheName: string,
-    config?: any,
-  }): Promise<any> {
+    model: string;
+    contents: Part[];
+    cacheName: string;
+    config?: Record<string, unknown>;
+  }): Promise<GenerateContentResponse> {
     try {
       if (!model || !contents || !cacheName) {
-        Logger.error('ContextCacheService.generateWithCache: Missing required params', { model, contents, cacheName });
+        Logger.error('ContextCacheService.generateWithCache: Missing required params', {
+          model,
+          contents,
+          cacheName,
+        });
         throw new ValidationError('model, contents, and cacheName are required');
       }
       return await this.genAI.models.generateContent({
@@ -136,4 +155,4 @@ export class ContextCacheService extends BaseGenAIService {
       throw new GeminiApiError('Failed to generate with cache', err);
     }
   }
-} 
+}

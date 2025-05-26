@@ -1,10 +1,10 @@
 /**
  * Service for function calling (OpenAPI schema, parallel) using Gemini API.
  */
-import { BaseGenAIService } from "./BaseGenAIService";
-import { Type, FunctionCallingConfigMode } from "@google/genai";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
-import { ModelConfig } from "../types/types";
+import { BaseGenAIService } from './BaseGenAIService';
+import { Type, FunctionCallingConfigMode, Part, GenerateContentResponse } from '@google/genai';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
+import { ModelConfig } from '../types/types';
 
 export interface FunctionDeclaration {
   name: string;
@@ -13,13 +13,13 @@ export interface FunctionDeclaration {
 }
 export interface CallWithFunctionsParams {
   model: string;
-  contents: any[];
+  contents: Part[];
   functionDeclarations: FunctionDeclaration[];
   config?: ModelConfig;
 }
 export interface CallWithParallelFunctionsParams {
   model: string;
-  contents: any[];
+  contents: Part[];
   functionDeclarations: FunctionDeclaration[];
   config?: ModelConfig;
 }
@@ -40,10 +40,14 @@ export class FunctionCallingService extends BaseGenAIService {
    * @param params { model, contents, functionDeclarations, config? }
    * @returns The model response (including functionCalls if present).
    */
-  async callWithFunctions(params: CallWithFunctionsParams): Promise<any> {
+  async callWithFunctions(params: CallWithFunctionsParams): Promise<GenerateContentResponse> {
     try {
       if (!params.model || !params.contents || !params.functionDeclarations) {
-        Logger.error('FunctionCallingService.callWithFunctions: Missing required params', { model: params.model, contents: params.contents, functionDeclarations: params.functionDeclarations });
+        Logger.error('FunctionCallingService.callWithFunctions: Missing required params', {
+          model: params.model,
+          contents: params.contents,
+          functionDeclarations: params.functionDeclarations,
+        });
         throw new ValidationError('model, contents, and functionDeclarations are required');
       }
       return await this.genAI.models.generateContent({
@@ -74,8 +78,10 @@ export class FunctionCallingService extends BaseGenAIService {
    * @param response The model response.
    * @returns Array of function call objects (name, args), or empty array.
    */
-  static getFunctionCalls(response: any): Array<{ name: string, args: any }> {
-    return response.functionCalls || [];
+  static getFunctionCalls(
+    response: Record<string, unknown>,
+  ): Array<{ name: string; args: unknown }> {
+    return (response.functionCalls as Array<{ name: string; args: unknown }>) || [];
   }
 
   /**
@@ -83,10 +89,16 @@ export class FunctionCallingService extends BaseGenAIService {
    * @param params { model, contents, functionDeclarations, config? }
    * @returns The model response (including functionCalls if present).
    */
-  async callWithParallelFunctions(params: CallWithParallelFunctionsParams): Promise<any> {
+  async callWithParallelFunctions(
+    params: CallWithParallelFunctionsParams,
+  ): Promise<GenerateContentResponse> {
     try {
       if (!params.model || !params.contents || !params.functionDeclarations) {
-        Logger.error('FunctionCallingService.callWithParallelFunctions: Missing required params', { model: params.model, contents: params.contents, functionDeclarations: params.functionDeclarations });
+        Logger.error('FunctionCallingService.callWithParallelFunctions: Missing required params', {
+          model: params.model,
+          contents: params.contents,
+          functionDeclarations: params.functionDeclarations,
+        });
         throw new ValidationError('model, contents, and functionDeclarations are required');
       }
       return await this.genAI.models.generateContent({
@@ -105,4 +117,4 @@ export class FunctionCallingService extends BaseGenAIService {
       throw new GeminiApiError('Failed to call with parallel functions', err);
     }
   }
-} 
+}

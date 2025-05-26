@@ -15,4 +15,4 @@ export enum GeminiModel {
   IMAGEN_3_0_GENERATE_002 = 'imagen-3.0-generate-002',
   VEO_2_0_GENERATE_001 = 'veo-2.0-generate-001',
   GEMINI_2_0_FLASH_LIVE_001 = 'gemini-2.0-flash-live-001',
-} 
+}

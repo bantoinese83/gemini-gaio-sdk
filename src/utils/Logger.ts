@@ -12,7 +12,7 @@ export class Logger {
    * Log a debug message.
    * @param args Arguments to log
    */
-  static debug(...args: any[]) {
+  static debug(...args: unknown[]) {
     if (Logger.enabled) console.debug('[GeminiSDK][DEBUG]', ...args);
   }
 
@@ -20,7 +20,7 @@ export class Logger {
    * Log an info message.
    * @param args Arguments to log
    */
-  static info(...args: any[]) {
+  static info(...args: unknown[]) {
     if (Logger.enabled) console.info('[GeminiSDK][INFO]', ...args);
   }
 
@@ -28,7 +28,7 @@ export class Logger {
    * Log a warning message.
    * @param args Arguments to log
    */
-  static warn(...args: any[]) {
+  static warn(...args: unknown[]) {
     if (Logger.enabled) console.warn('[GeminiSDK][WARN]', ...args);
   }
 
@@ -36,7 +36,7 @@ export class Logger {
    * Log an error message.
    * @param args Arguments to log
    */
-  static error(...args: any[]) {
+  static error(...args: unknown[]) {
     if (Logger.enabled) console.error('[GeminiSDK][ERROR]', ...args);
   }
 }
@@ -45,10 +45,13 @@ export class Logger {
  * Base error class for all Gemini SDK errors.
  */
 export class GeminiError extends Error {
-  constructor(message: string, public cause?: any) {
+  constructor(
+    message: string,
+    public cause?: unknown,
+  ) {
     super(message);
     this.name = 'GeminiError';
-    if (cause) this.stack += '\nCaused by: ' + (cause.stack || cause);
+    if (cause) this.stack += '\nCaused by: ' + ((cause as Error).stack || cause);
   }
 }
 
@@ -56,7 +59,7 @@ export class GeminiError extends Error {
  * Error thrown for Gemini API failures.
  */
 export class GeminiApiError extends GeminiError {
-  constructor(message: string, cause?: any) {
+  constructor(message: string, cause?: unknown) {
     super(message, cause);
     this.name = 'GeminiApiError';
   }
@@ -66,7 +69,7 @@ export class GeminiApiError extends GeminiError {
  * Error thrown for file upload/processing failures.
  */
 export class FileProcessingError extends GeminiError {
-  constructor(message: string, cause?: any) {
+  constructor(message: string, cause?: unknown) {
     super(message, cause);
     this.name = 'FileProcessingError';
   }
@@ -76,8 +79,8 @@ export class FileProcessingError extends GeminiError {
  * Error thrown for invalid arguments or validation failures.
  */
 export class ValidationError extends GeminiError {
-  constructor(message: string, cause?: any) {
+  constructor(message: string, cause?: unknown) {
     super(message, cause);
     this.name = 'ValidationError';
   }
-} 
+}

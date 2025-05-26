@@ -18,13 +18,23 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node gemini-service.js"
+    "start": "node gemini-service.js",
+    "lint": "eslint . --ext .ts --max-warnings=0",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@google/genai": "^0.6.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.5",
+    "husky": "^9.0.11",
+    "@typescript-eslint/eslint-plugin": "^7.4.0",
+    "@typescript-eslint/parser": "^7.4.0",
+    "eslint-config-prettier": "^9.1.0"
   }
-} 
+}

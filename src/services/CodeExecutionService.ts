@@ -1,7 +1,8 @@
-import { BaseGenAIService } from "./BaseGenAIService";
-import { ResponseParser } from "../utils/ResponseParser";
-import { ExecuteCodeParams, ExecuteCodeResult } from "../types/types";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
+import { BaseGenAIService } from './BaseGenAIService';
+import { ResponseParser } from '../utils/ResponseParser';
+import { ExecuteCodeParams, ExecuteCodeResult } from '../types/types';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
+import type { Content } from '@google/genai';
 
 /**
  * Service for enabling code execution via Gemini API (Python only).
@@ -23,14 +24,13 @@ export class CodeExecutionService extends BaseGenAIService {
    * @param config Additional config (optional).
    * @returns Array of parts: text, executableCode, codeExecutionResult, inlineData, etc.
    */
-  async executeCode({
-    model,
-    prompt,
-    config = {},
-  }: ExecuteCodeParams): Promise<ExecuteCodeResult> {
+  async executeCode({ model, prompt, config = {} }: ExecuteCodeParams): Promise<ExecuteCodeResult> {
     try {
       if (!model || !prompt) {
-        Logger.error('CodeExecutionService.executeCode: Missing required params', { model, prompt });
+        Logger.error('CodeExecutionService.executeCode: Missing required params', {
+          model,
+          prompt,
+        });
         throw new ValidationError('model and prompt are required');
       }
       const contents = Array.isArray(prompt) ? prompt : [prompt];
@@ -61,14 +61,18 @@ export class CodeExecutionService extends BaseGenAIService {
     message,
     config = {},
   }: {
-    model: string,
-    history: any[],
-    message: string,
-    config?: any,
+    model: string;
+    history: Content[];
+    message: string;
+    config?: Record<string, unknown>;
   }): Promise<ExecuteCodeResult> {
     try {
       if (!model || !history || !message) {
-        Logger.error('CodeExecutionService.executeCodeChat: Missing required params', { model, history, message });
+        Logger.error('CodeExecutionService.executeCodeChat: Missing required params', {
+          model,
+          history,
+          message,
+        });
         throw new ValidationError('model, history, and message are required');
       }
       const chat = this.genAI.chats.create({
@@ -86,4 +90,4 @@ export class CodeExecutionService extends BaseGenAIService {
   }
 }
 
-export default CodeExecutionService; 
+export default CodeExecutionService;

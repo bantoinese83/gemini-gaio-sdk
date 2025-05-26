@@ -1,6 +1,6 @@
-import { BaseGenAIService } from "./BaseGenAIService";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
-import { ModelConfig } from "../types/types";
+import { BaseGenAIService } from './BaseGenAIService';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
+import type { Part } from '@google/genai';
 
 export interface AnalyzeVideoFileParams {
   model: string;
@@ -22,7 +22,11 @@ export class VideoService extends BaseGenAIService {
   async analyzeVideoFile(params: AnalyzeVideoFileParams): Promise<string> {
     try {
       if (!params.model || !params.filePath || !params.prompt) {
-        Logger.error('VideoService.analyzeVideoFile: Missing required params', { model: params.model, filePath: params.filePath, prompt: params.prompt });
+        Logger.error('VideoService.analyzeVideoFile: Missing required params', {
+          model: params.model,
+          filePath: params.filePath,
+          prompt: params.prompt,
+        });
         throw new ValidationError('model, filePath, and prompt are required');
       }
       const fs = await import('fs');
@@ -30,26 +34,34 @@ export class VideoService extends BaseGenAIService {
       const isSmall = stats.size < 20 * 1024 * 1024;
       if (isSmall && !params.useFileApi) {
         const base64Video = fs.readFileSync(params.filePath, { encoding: 'base64' });
-        const parts: any[] = [
+        const parts: Part[] = [
           {
             inlineData: {
               mimeType: 'video/mp4',
               data: base64Video,
             },
-          },
-          { text: params.prompt },
+          } as Part,
+          { text: params.prompt } as Part,
         ];
-        const response = await this.genAI.models.generateContent({ model: params.model, contents: parts });
+        const response = await this.genAI.models.generateContent({
+          model: params.model,
+          contents: parts,
+        });
         return response.text ?? '';
       } else {
-        const file = await this.genAI.files.upload({ file: params.filePath, config: { mimeType: 'video/mp4' } });
-        // @ts-ignore
+        const file = await this.genAI.files.upload({
+          file: params.filePath,
+          config: { mimeType: 'video/mp4' },
+        });
         const { createUserContent, createPartFromUri } = await import('@google/genai');
-        const parts = createUserContent([
+        const parts: Part[] = createUserContent([
           createPartFromUri(file.uri ?? '', file.mimeType ?? 'video/mp4'),
           params.prompt,
-        ]);
-        const response = await this.genAI.models.generateContent({ model: params.model, contents: parts });
+        ]) as Part[];
+        const response = await this.genAI.models.generateContent({
+          model: params.model,
+          contents: parts,
+        });
         return response.text ?? '';
       }
     } catch (err) {
@@ -61,20 +73,26 @@ export class VideoService extends BaseGenAIService {
   async analyzeYoutubeVideo(params: AnalyzeYoutubeVideoParams): Promise<string> {
     try {
       if (!params.model || !params.youtubeUrl || !params.prompt) {
-        Logger.error('VideoService.analyzeYoutubeVideo: Missing required params', { model: params.model, youtubeUrl: params.youtubeUrl, prompt: params.prompt });
+        Logger.error('VideoService.analyzeYoutubeVideo: Missing required params', {
+          model: params.model,
+          youtubeUrl: params.youtubeUrl,
+          prompt: params.prompt,
+        });
         throw new ValidationError('model, youtubeUrl, and prompt are required');
       }
-      // @ts-ignore
-      const { createUserContent } = await import('@google/generative-ai');
+      const { createUserContent } = await import('@google/genai');
       const parts = createUserContent([
         params.prompt,
         { fileData: { fileUri: params.youtubeUrl } },
       ]);
-      const response = await this.genAI.models.generateContent({ model: params.model, contents: parts });
+      const response = await this.genAI.models.generateContent({
+        model: params.model,
+        contents: parts,
+      });
       return response.text ?? '';
     } catch (err) {
       Logger.error('VideoService.analyzeYoutubeVideo error', err);
       throw new GeminiApiError('Failed to analyze YouTube video', err);
     }
   }
-} 
+}

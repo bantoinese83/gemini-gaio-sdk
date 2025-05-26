@@ -1,7 +1,7 @@
-import { BaseGenAIService } from "./BaseGenAIService";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
-import { StreamingCallbacks, LiveSession, ModelConfig } from "../types/types";
-import { Modality } from "@google/genai";
+import { BaseGenAIService } from './BaseGenAIService';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
+import { StreamingCallbacks, ModelConfig, LiveSession } from '../types/types';
+import { Modality } from '@google/genai';
 
 export class LiveApiService extends BaseGenAIService {
   constructor(apiKey: string) {
@@ -22,26 +22,33 @@ export class LiveApiService extends BaseGenAIService {
     callbacks,
     config = {},
   }: {
-    model?: string,
-    responseModality?: string,
-    callbacks: StreamingCallbacks,
-    config?: ModelConfig,
-  }): Promise<any> {
+    model?: string;
+    responseModality?: string;
+    callbacks: StreamingCallbacks;
+    config?: ModelConfig;
+  }): Promise<LiveSession> {
     try {
       if (!model || !callbacks) {
-        Logger.error('LiveApiService.connectSession: Missing required params', { model, callbacks });
+        Logger.error('LiveApiService.connectSession: Missing required params', {
+          model,
+          callbacks,
+        });
         throw new ValidationError('model and callbacks are required');
       }
-      return await this.genAI.live.connect({
+      const session = await this.genAI.live.connect({
         model,
         callbacks: {
           onopen: callbacks.onopen,
-          onmessage: callbacks.onmessage as any,
+          onmessage: callbacks.onmessage as (e: unknown) => void,
           onerror: callbacks.onerror,
           onclose: callbacks.onclose,
         },
-        config: { responseModalities: [Modality[responseModality as keyof typeof Modality]], ...config },
+        config: {
+          responseModalities: [Modality[responseModality as keyof typeof Modality]],
+          ...config,
+        },
       });
+      return session as unknown as LiveSession;
     } catch (err) {
       Logger.error('LiveApiService.connectSession error', err);
       throw new GeminiApiError('Failed to connect to live session', err);
@@ -53,7 +60,7 @@ export class LiveApiService extends BaseGenAIService {
    * @param session The live session object.
    * @param text The text to send.
    */
-  async sendText(session: any, text: string): Promise<void> {
+  async sendText(session: LiveSession, text: string): Promise<void> {
     try {
       if (!session || !text) {
         Logger.error('LiveApiService.sendText: Missing required params', { session, text });
@@ -71,7 +78,7 @@ export class LiveApiService extends BaseGenAIService {
    * @param session The live session object.
    * @param base64Audio The base64-encoded audio data.
    */
-  async sendAudio(session: any, base64Audio: string): Promise<void> {
+  async sendAudio(session: LiveSession, base64Audio: string): Promise<void> {
     try {
       if (!session || !base64Audio) {
         Logger.error('LiveApiService.sendAudio: Missing required params', { session, base64Audio });
@@ -93,7 +100,7 @@ export class LiveApiService extends BaseGenAIService {
    * Close a Live API session.
    * @param session The session object.
    */
-  async closeSession(session: any): Promise<void> {
+  async closeSession(session: LiveSession): Promise<void> {
     try {
       if (!session) {
         Logger.error('LiveApiService.closeSession: Missing required param session', { session });
@@ -105,4 +112,4 @@ export class LiveApiService extends BaseGenAIService {
       throw new GeminiApiError('Failed to close live session', err);
     }
   }
-} 
+}

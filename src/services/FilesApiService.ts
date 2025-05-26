@@ -1,9 +1,10 @@
 /**
  * Service for file management (upload, list, delete) using Gemini API.
  */
-import { BaseGenAIService } from "./BaseGenAIService";
-import { Logger, GeminiApiError, FileProcessingError, ValidationError } from "../utils/Logger";
-import { FileReference, ModelConfig } from "../types/types";
+import { BaseGenAIService } from './BaseGenAIService';
+import { Logger, GeminiApiError, FileProcessingError, ValidationError } from '../utils/Logger';
+import { FileReference } from '../types/types';
+import type { File as GenAIFile } from '@google/genai';
 
 export class FilesApiService extends BaseGenAIService {
   /**
@@ -19,7 +20,11 @@ export class FilesApiService extends BaseGenAIService {
    * @param params { file, mimeType, displayName? }
    * @returns The uploaded file object (with uri, name, mimeType, etc).
    */
-  async uploadFile(params: { file: string | Blob; mimeType: string; displayName?: string }): Promise<any> {
+  async uploadFile(params: {
+    file: string | Blob;
+    mimeType: string;
+    displayName?: string;
+  }): Promise<GenAIFile> {
     const { file, mimeType, displayName } = params;
     if (typeof file !== 'string' && !(file instanceof Blob)) {
       throw new ValidationError('file must be a string (path/uri) or Blob');
@@ -67,11 +72,12 @@ export class FilesApiService extends BaseGenAIService {
       const pager = await this.genAI.files.list({ config: { pageSize } });
       let page = pager.page;
       const results: FileReference[] = [];
-      while (true) {
+      do {
         for (const f of page) results.push(f);
-        if (!pager.hasNextPage()) break;
-        page = await pager.nextPage();
-      }
+        if (pager.hasNextPage()) {
+          page = await pager.nextPage();
+        }
+      } while (pager.hasNextPage());
       return results;
     } catch (err) {
       Logger.error('FilesApiService.listFiles error', err);
@@ -95,4 +101,4 @@ export class FilesApiService extends BaseGenAIService {
       throw new GeminiApiError('Failed to delete file', err);
     }
   }
-} 
+}

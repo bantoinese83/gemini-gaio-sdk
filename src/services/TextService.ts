@@ -1,6 +1,7 @@
-import { BaseGenAIService } from "./BaseGenAIService";
-import { GenerateTextParams, GenerateTextResult } from "../types/types";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
+import { BaseGenAIService } from './BaseGenAIService';
+import { GenerateTextParams, GenerateTextResult } from '../types/types';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
+import type { Content } from '@google/genai';
 
 /**
  * Service for text generation and chat using Gemini API.
@@ -37,10 +38,17 @@ export class TextService extends BaseGenAIService {
    * @param params { model, contents, config }
    * @returns The Gemini API response stream (raw)
    */
-  async generateTextStream({ model, contents, config }: GenerateTextParams): Promise<GenerateTextResult> {
+  async generateTextStream({
+    model,
+    contents,
+    config,
+  }: GenerateTextParams): Promise<GenerateTextResult> {
     try {
       if (!model || !contents) {
-        Logger.error('TextService.generateTextStream: Missing required params', { model, contents });
+        Logger.error('TextService.generateTextStream: Missing required params', {
+          model,
+          contents,
+        });
         throw new ValidationError('model and contents are required');
       }
       return await this.genAI.models.generateContentStream({ model, contents, config });
@@ -56,7 +64,7 @@ export class TextService extends BaseGenAIService {
    * @param history Optional chat history
    * @returns The chat session object
    */
-  createChat(model: string, history?: any[]): any {
+  createChat(model: string, history?: Content[]): unknown {
     try {
       if (!model) {
         Logger.error('TextService.createChat: Missing required param model', { model });
@@ -68,4 +76,4 @@ export class TextService extends BaseGenAIService {
       throw new GeminiApiError('Failed to create chat session', err);
     }
   }
-} 
+}

@@ -1,8 +1,9 @@
 /**
  * Service for URL context and Google Search grounding using Gemini API.
  */
-import { BaseGenAIService } from "./BaseGenAIService";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
+import { BaseGenAIService } from './BaseGenAIService';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
+import type { Part, GenerateContentResponse } from '@google/genai';
 
 export class UrlContextService extends BaseGenAIService {
   /**
@@ -23,22 +24,42 @@ export class UrlContextService extends BaseGenAIService {
     contents,
     config = {},
   }: {
-    model: string,
-    contents: string | any[],
-    config?: any,
-  }): Promise<{ text: string, urlContextMetadata?: any, rawResponse: any }> {
+    model: string;
+    contents: Part[];
+    config?: Record<string, unknown>;
+  }): Promise<{
+    text: string;
+    urlContextMetadata?: Record<string, unknown>;
+    rawResponse: GenerateContentResponse;
+  }> {
     try {
       if (!model || !contents) {
-        Logger.error('UrlContextService.generateWithUrlContext: Missing required params', { model, contents });
+        Logger.error('UrlContextService.generateWithUrlContext: Missing required params', {
+          model,
+          contents,
+        });
         throw new ValidationError('model and contents are required');
       }
       const response = await this.genAI.models.generateContent({
         model,
         contents,
-        config: { ...config, tools: [{ urlContext: {} }] },
+        config,
       });
-      const candidate = response.candidates?.[0] as any;
-      const urlContextMetadata = candidate?.metadata?.urlContextMetadata || candidate?.urlContextMetadata;
+      const candidate = response.candidates?.[0] as Record<string, unknown>;
+      let urlContextMetadata: Record<string, unknown> | undefined = undefined;
+      if (candidate && typeof candidate === 'object') {
+        if (
+          'metadata' in candidate &&
+          candidate.metadata &&
+          typeof candidate.metadata === 'object' &&
+          'urlContextMetadata' in candidate.metadata
+        ) {
+          urlContextMetadata = (candidate.metadata as Record<string, unknown>)
+            .urlContextMetadata as Record<string, unknown>;
+        } else if ('urlContextMetadata' in candidate) {
+          urlContextMetadata = candidate.urlContextMetadata as Record<string, unknown>;
+        }
+      }
       return {
         text: response.text ?? '',
         urlContextMetadata,
@@ -60,22 +81,42 @@ export class UrlContextService extends BaseGenAIService {
     contents,
     config = {},
   }: {
-    model: string,
-    contents: string | any[],
-    config?: any,
-  }): Promise<{ text: string, urlContextMetadata?: any, rawResponse: any }> {
+    model: string;
+    contents: Part[];
+    config?: Record<string, unknown>;
+  }): Promise<{
+    text: string;
+    urlContextMetadata?: Record<string, unknown>;
+    rawResponse: GenerateContentResponse;
+  }> {
     try {
       if (!model || !contents) {
-        Logger.error('UrlContextService.generateWithUrlContextAndSearch: Missing required params', { model, contents });
+        Logger.error('UrlContextService.generateWithUrlContextAndSearch: Missing required params', {
+          model,
+          contents,
+        });
         throw new ValidationError('model and contents are required');
       }
       const response = await this.genAI.models.generateContent({
         model,
         contents,
-        config: { ...config, tools: [{ urlContext: {} }, { googleSearch: {} }] },
+        config,
       });
-      const candidate = response.candidates?.[0] as any;
-      const urlContextMetadata = candidate?.metadata?.urlContextMetadata || candidate?.urlContextMetadata;
+      const candidate = response.candidates?.[0] as Record<string, unknown>;
+      let urlContextMetadata: Record<string, unknown> | undefined = undefined;
+      if (candidate && typeof candidate === 'object') {
+        if (
+          'metadata' in candidate &&
+          candidate.metadata &&
+          typeof candidate.metadata === 'object' &&
+          'urlContextMetadata' in candidate.metadata
+        ) {
+          urlContextMetadata = (candidate.metadata as Record<string, unknown>)
+            .urlContextMetadata as Record<string, unknown>;
+        } else if ('urlContextMetadata' in candidate) {
+          urlContextMetadata = candidate.urlContextMetadata as Record<string, unknown>;
+        }
+      }
       return {
         text: response.text ?? '',
         urlContextMetadata,
@@ -86,4 +127,4 @@ export class UrlContextService extends BaseGenAIService {
       throw new GeminiApiError('Failed to generate with URL context and search', err);
     }
   }
-} 
+}

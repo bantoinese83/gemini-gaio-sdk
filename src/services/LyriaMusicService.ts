@@ -1,8 +1,8 @@
 /**
  * Service for real-time music generation using Lyria (Gemini API).
  */
-import { BaseGenAIService } from "./BaseGenAIService";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
+import { BaseGenAIService } from './BaseGenAIService';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
 
 export class LyriaMusicService extends BaseGenAIService {
   /**
@@ -27,12 +27,12 @@ export class LyriaMusicService extends BaseGenAIService {
     onClose,
     model = 'models/lyria-realtime-exp',
   }: {
-    onMessage: (message: any) => void,
-    onError?: (error: any) => void,
-    onClose?: () => void,
-    model?: string,
-  }) {
-    // @ts-ignore
+    onMessage: (message: unknown) => void;
+    onError?: (error: unknown) => void;
+    onClose?: () => void;
+    model?: string;
+  }): Record<string, unknown> {
+    // @ts-expect-error Lyria live.music.connect is not typed in @google/genai
     return this.genAI.live.music.connect({
       model,
       callbacks: {
@@ -48,13 +48,27 @@ export class LyriaMusicService extends BaseGenAIService {
    * @param session The Lyria session object.
    * @param weightedPrompts Array of { text, weight }.
    */
-  async setWeightedPrompts(session: any, weightedPrompts: Array<{ text: string, weight: number }>) {
+  async setWeightedPrompts(
+    session: Record<string, unknown>,
+    weightedPrompts: Array<{ text: string; weight: number }>,
+  ) {
     try {
-      if (!session || !weightedPrompts || !Array.isArray(weightedPrompts) || weightedPrompts.length === 0) {
-        Logger.error('LyriaMusicService.setWeightedPrompts: Missing required params', { session, weightedPrompts });
+      if (
+        !session ||
+        !weightedPrompts ||
+        !Array.isArray(weightedPrompts) ||
+        weightedPrompts.length === 0
+      ) {
+        Logger.error('LyriaMusicService.setWeightedPrompts: Missing required params', {
+          session,
+          weightedPrompts,
+        });
         throw new ValidationError('session and weightedPrompts (non-empty array) are required');
       }
-      await session.setWeightedPrompts({ weightedPrompts });
+      const fn = session.setWeightedPrompts as unknown as (args: {
+        weightedPrompts: Array<{ text: string; weight: number }>;
+      }) => Promise<void>;
+      await fn({ weightedPrompts });
     } catch (err) {
       Logger.error('LyriaMusicService.setWeightedPrompts error', err);
       throw new GeminiApiError('Failed to set weighted prompts', err);
@@ -66,13 +80,22 @@ export class LyriaMusicService extends BaseGenAIService {
    * @param session The Lyria session object.
    * @param config MusicGenerationConfig (bpm, temperature, density, etc.).
    */
-  async setMusicGenerationConfig(session: any, config: any) {
+  async setMusicGenerationConfig(
+    session: Record<string, unknown>,
+    config: Record<string, unknown>,
+  ) {
     try {
       if (!session || !config) {
-        Logger.error('LyriaMusicService.setMusicGenerationConfig: Missing required params', { session, config });
+        Logger.error('LyriaMusicService.setMusicGenerationConfig: Missing required params', {
+          session,
+          config,
+        });
         throw new ValidationError('session and config are required');
       }
-      await session.setMusicGenerationConfig({ musicGenerationConfig: config });
+      const fn = session.setMusicGenerationConfig as unknown as (args: {
+        musicGenerationConfig: Record<string, unknown>;
+      }) => Promise<void>;
+      await fn({ musicGenerationConfig: config });
     } catch (err) {
       Logger.error('LyriaMusicService.setMusicGenerationConfig error', err);
       throw new GeminiApiError('Failed to set music generation config', err);
@@ -83,13 +106,14 @@ export class LyriaMusicService extends BaseGenAIService {
    * Start music generation in the Lyria session.
    * @param session The Lyria session object.
    */
-  async play(session: any) {
+  async play(session: Record<string, unknown>) {
     try {
       if (!session) {
         Logger.error('LyriaMusicService.play: Missing required param session', { session });
         throw new ValidationError('session is required');
       }
-      await session.play();
+      const fn = session.play as unknown as () => Promise<void>;
+      await fn();
     } catch (err) {
       Logger.error('LyriaMusicService.play error', err);
       throw new GeminiApiError('Failed to play music', err);
@@ -100,13 +124,14 @@ export class LyriaMusicService extends BaseGenAIService {
    * Pause music generation in the Lyria session.
    * @param session The Lyria session object.
    */
-  async pause(session: any) {
+  async pause(session: Record<string, unknown>) {
     try {
       if (!session) {
         Logger.error('LyriaMusicService.pause: Missing required param session', { session });
         throw new ValidationError('session is required');
       }
-      await session.pause();
+      const fn = session.pause as unknown as () => Promise<void>;
+      await fn();
     } catch (err) {
       Logger.error('LyriaMusicService.pause error', err);
       throw new GeminiApiError('Failed to pause music', err);
@@ -117,13 +142,14 @@ export class LyriaMusicService extends BaseGenAIService {
    * Stop music generation in the Lyria session.
    * @param session The Lyria session object.
    */
-  async stop(session: any) {
+  async stop(session: Record<string, unknown>) {
     try {
       if (!session) {
         Logger.error('LyriaMusicService.stop: Missing required param session', { session });
         throw new ValidationError('session is required');
       }
-      await session.stop();
+      const fn = session.stop as unknown as () => Promise<void>;
+      await fn();
     } catch (err) {
       Logger.error('LyriaMusicService.stop error', err);
       throw new GeminiApiError('Failed to stop music', err);
@@ -134,16 +160,17 @@ export class LyriaMusicService extends BaseGenAIService {
    * Reset the Lyria session context (for hard transitions, e.g., bpm/scale changes).
    * @param session The Lyria session object.
    */
-  async resetContext(session: any) {
+  async resetContext(session: Record<string, unknown>) {
     try {
       if (!session) {
         Logger.error('LyriaMusicService.resetContext: Missing required param session', { session });
         throw new ValidationError('session is required');
       }
-      await session.reset_context();
+      const fn = session.reset_context as unknown as () => Promise<void>;
+      await fn();
     } catch (err) {
       Logger.error('LyriaMusicService.resetContext error', err);
       throw new GeminiApiError('Failed to reset context', err);
     }
   }
-} 
+}

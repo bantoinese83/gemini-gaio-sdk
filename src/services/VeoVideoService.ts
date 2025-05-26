@@ -1,7 +1,7 @@
-import { BaseGenAIService } from "./BaseGenAIService";
-import { createWriteStream } from "fs";
-import { Readable } from "stream";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
+import { BaseGenAIService } from './BaseGenAIService';
+import { createWriteStream } from 'fs';
+import { Readable } from 'stream';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
 
 export class VeoVideoService extends BaseGenAIService {
   constructor(apiKey: string) {
@@ -16,25 +16,27 @@ export class VeoVideoService extends BaseGenAIService {
    */
   async generateVideoFromText({
     prompt,
-    model = "veo-2.0-generate-001",
+    model = 'veo-2.0-generate-001',
     options = {},
     apiKey,
   }: {
-    prompt: string,
-    model?: string,
+    prompt: string;
+    model?: string;
     options?: {
-      aspectRatio?: "16:9" | "9:16",
-      personGeneration?: "dont_allow" | "allow_adult",
-      numberOfVideos?: 1 | 2,
-      durationSeconds?: number,
-      negativePrompt?: string,
-      enhancePrompt?: boolean,
-    },
-    apiKey?: string,
+      aspectRatio?: '16:9' | '9:16';
+      personGeneration?: 'dont_allow' | 'allow_adult';
+      numberOfVideos?: 1 | 2;
+      durationSeconds?: number;
+      negativePrompt?: string;
+      enhancePrompt?: boolean;
+    };
+    apiKey?: string;
   }): Promise<string[]> {
     try {
       if (!prompt) {
-        Logger.error('VeoVideoService.generateVideoFromText: Missing required param prompt', { prompt });
+        Logger.error('VeoVideoService.generateVideoFromText: Missing required param prompt', {
+          prompt,
+        });
         throw new ValidationError('prompt is required');
       }
       // @ts-expect-error: generateVideos is not in the public type yet
@@ -50,7 +52,7 @@ export class VeoVideoService extends BaseGenAIService {
       }
       const key = apiKey || process.env.GEMINI_API_KEY;
       return (operation.response?.generatedVideos || []).map(
-        (v: any) => `${v.video?.uri}${key ? `&key=${key}` : ""}`
+        (v: { video?: { uri?: string } }) => `${v.video?.uri}${key ? `&key=${key}` : ''}`,
       );
     } catch (err) {
       Logger.error('VeoVideoService.generateVideoFromText error', err);
@@ -69,28 +71,31 @@ export class VeoVideoService extends BaseGenAIService {
   async generateVideoFromImage({
     prompt,
     imageBytes,
-    mimeType = "image/png",
-    model = "veo-2.0-generate-001",
+    mimeType = 'image/png',
+    model = 'veo-2.0-generate-001',
     options = {},
     apiKey,
   }: {
-    prompt: string,
-    imageBytes: Buffer | string,
-    mimeType?: string,
-    model?: string,
+    prompt: string;
+    imageBytes: Buffer | string;
+    mimeType?: string;
+    model?: string;
     options?: {
-      aspectRatio?: "16:9" | "9:16",
-      personGeneration?: "dont_allow" | "allow_adult",
-      numberOfVideos?: 1 | 2,
-      durationSeconds?: number,
-      negativePrompt?: string,
-      enhancePrompt?: boolean,
-    },
-    apiKey?: string,
+      aspectRatio?: '16:9' | '9:16';
+      personGeneration?: 'dont_allow' | 'allow_adult';
+      numberOfVideos?: 1 | 2;
+      durationSeconds?: number;
+      negativePrompt?: string;
+      enhancePrompt?: boolean;
+    };
+    apiKey?: string;
   }): Promise<string[]> {
     try {
       if (!prompt || !imageBytes) {
-        Logger.error('VeoVideoService.generateVideoFromImage: Missing required params', { prompt, imageBytes });
+        Logger.error('VeoVideoService.generateVideoFromImage: Missing required params', {
+          prompt,
+          imageBytes,
+        });
         throw new ValidationError('prompt and imageBytes are required');
       }
       // @ts-expect-error: generateVideos is not in the public type yet
@@ -110,7 +115,7 @@ export class VeoVideoService extends BaseGenAIService {
       }
       const key = apiKey || process.env.GEMINI_API_KEY;
       return (operation.response?.generatedVideos || []).map(
-        (v: any) => `${v.video?.uri}${key ? `&key=${key}` : ""}`
+        (v: { video?: { uri?: string } }) => `${v.video?.uri}${key ? `&key=${key}` : ''}`,
       );
     } catch (err) {
       Logger.error('VeoVideoService.generateVideoFromImage error', err);
@@ -131,7 +136,7 @@ export class VeoVideoService extends BaseGenAIService {
       }
       const resp = await fetch(uri);
       const writer = createWriteStream(filename);
-      (Readable as any).fromWeb(resp.body).pipe(writer);
+      (Readable.fromWeb as (body: unknown) => NodeJS.ReadableStream)(resp.body).pipe(writer);
       return new Promise<void>((resolve, reject) => {
         writer.on('finish', () => resolve());
         writer.on('error', reject);
@@ -141,4 +146,4 @@ export class VeoVideoService extends BaseGenAIService {
       throw new GeminiApiError('Failed to download video', err);
     }
   }
-} 
+}

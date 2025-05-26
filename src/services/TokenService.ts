@@ -1,6 +1,6 @@
-import { BaseGenAIService } from "./BaseGenAIService";
-import { createUserContent, createPartFromUri } from "@google/genai";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
+import { BaseGenAIService } from './BaseGenAIService';
+import { createUserContent, createPartFromUri, Content } from '@google/genai';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
 
 export class TokenService extends BaseGenAIService {
   constructor(apiKey: string) {
@@ -33,7 +33,7 @@ export class TokenService extends BaseGenAIService {
    * @param history Array of chat turns (role/parts objects).
    * @returns Total token count.
    */
-  async countChatTokens(model: string, history: any[]): Promise<number> {
+  async countChatTokens(model: string, history: Content[]): Promise<number> {
     try {
       if (!model || !history) {
         Logger.error('TokenService.countChatTokens: Missing required params', { model, history });
@@ -54,16 +54,24 @@ export class TokenService extends BaseGenAIService {
    * @param files Array of { uri, mimeType } or a single file { uri, mimeType }.
    * @returns Total token count.
    */
-  async countMultimodalTokens(model: string, prompt: string, files: Array<{ uri: string, mimeType: string }> | { uri: string, mimeType: string }): Promise<number> {
+  async countMultimodalTokens(
+    model: string,
+    prompt: string,
+    files: Array<{ uri: string; mimeType: string }> | { uri: string; mimeType: string },
+  ): Promise<number> {
     try {
       if (!model || !prompt || !files) {
-        Logger.error('TokenService.countMultimodalTokens: Missing required params', { model, prompt, files });
+        Logger.error('TokenService.countMultimodalTokens: Missing required params', {
+          model,
+          prompt,
+          files,
+        });
         throw new ValidationError('model, prompt, and files are required');
       }
       const fileArr = Array.isArray(files) ? files : [files];
       const contents = createUserContent([
         prompt,
-        ...fileArr.map(f => createPartFromUri(f.uri, f.mimeType)),
+        ...fileArr.map((f) => createPartFromUri(f.uri, f.mimeType)),
       ]);
       const resp = await this.genAI.models.countTokens({ model, contents });
       return resp.totalTokens ?? 0;
@@ -78,12 +86,16 @@ export class TokenService extends BaseGenAIService {
    * @param response The response from generateContent.
    * @returns Usage metadata (input/output/total token counts, etc).
    */
-  getUsageMetadata(response: any): any {
+  getUsageMetadata(response: Record<string, unknown>): Record<string, unknown> | undefined {
     try {
-      return response.usageMetadata;
+      const usage = response.usageMetadata;
+      if (usage && typeof usage === 'object') {
+        return usage as Record<string, unknown>;
+      }
+      return undefined;
     } catch (err) {
       Logger.error('TokenService.getUsageMetadata error', err);
       throw new GeminiApiError('Failed to extract usage metadata', err);
     }
   }
-} 
+}

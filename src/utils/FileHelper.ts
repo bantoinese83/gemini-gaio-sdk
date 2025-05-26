@@ -1,8 +1,13 @@
-import { GoogleGenAI } from "@google/genai";
-import { Logger, FileProcessingError } from "./Logger";
+import { GoogleGenAI } from '@google/genai';
+import { Logger, FileProcessingError } from './Logger';
+import type { File as GenAIFile } from '@google/genai';
 
 export class FileHelper {
-  static async uploadFileAndWait(genAI: GoogleGenAI, fileInput: any, displayName: string): Promise<any> {
+  static async uploadFileAndWait(
+    genAI: GoogleGenAI,
+    fileInput: string | Blob,
+    displayName: string,
+  ): Promise<GenAIFile> {
     try {
       const file = await genAI.files.upload({ file: fileInput, config: { displayName } });
       let getFile = await genAI.files.get({ name: file.name ?? '' });
@@ -20,4 +25,4 @@ export class FileHelper {
       throw new FileProcessingError('File upload or processing failed.', err);
     }
   }
-} 
+}

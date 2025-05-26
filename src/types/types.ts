@@ -1,3 +1,5 @@
+import type { Part, Content, GenerateContentConfig, Schema } from '@google/genai';
+
 // Gemini API response part types
 export interface GeminiTextPart {
   text: string;
@@ -48,8 +50,8 @@ export interface AnalyzeAudioFileParams {
 // CodeExecutionService types
 export interface ExecuteCodeParams {
   model: string;
-  prompt: string | any[];
-  config?: any;
+  prompt: string | Part[];
+  config?: Record<string, unknown>;
 }
 export interface ExecuteCodeResult {
   text: string[];
@@ -61,21 +63,21 @@ export interface ExecuteCodeResult {
 // ImageService types
 export interface GenerateImageParams {
   model: string;
-  contents: string | any[];
-  config?: any;
+  contents: Part[];
+  config?: Record<string, unknown>;
 }
 export interface GenerateImageResult {
-  type: "text" | "image";
+  type: 'text' | 'image';
   data: string;
 }
 
 // TextService types
 export interface GenerateTextParams {
   model: string;
-  contents: string | any[];
-  config?: any;
+  contents: string | Part[] | Content[];
+  config?: Record<string, unknown>;
 }
-export type GenerateTextResult = any;
+export type GenerateTextResult = unknown;
 
 // DocumentService types
 export interface SummarizeFromUrlParams {
@@ -106,14 +108,20 @@ export interface SummarizeLargeFromFileParams {
 }
 export interface SummarizeMultipleParams {
   model: string;
-  docs: Array<{ file: any; displayName: string; isUrl?: boolean; mimeType?: string }>;
+  docs: Array<{ file: unknown; displayName: string; isUrl?: boolean; mimeType?: string }>;
   prompt: string;
 }
 export type SummarizeResult = string;
 
 // Shared/common types
 export type ModelName = string;
-export type ContentPart = string | GeminiTextPart | GeminiInlineDataPart | GeminiExecutableCodePart | GeminiCodeExecutionResultPart | { [key: string]: unknown };
+export type ContentPart =
+  | string
+  | GeminiTextPart
+  | GeminiInlineDataPart
+  | GeminiExecutableCodePart
+  | GeminiCodeExecutionResultPart
+  | { [key: string]: unknown };
 export type ContentArray = ContentPart[];
 export interface ModelConfig {
   [key: string]: unknown;
@@ -137,4 +145,11 @@ export interface LiveSession {
   sendClientContent: (args: unknown) => Promise<void>;
   sendRealtimeInput: (args: unknown) => Promise<void>;
   close: () => Promise<void>;
-} 
+}
+
+// StructuredOutputService types (if needed)
+export interface StructuredOutputConfig extends GenerateContentConfig {
+  responseMimeType: 'application/json' | 'text/x.enum';
+  responseSchema: Schema;
+  [key: string]: unknown;
+}

@@ -1,6 +1,8 @@
-import { BaseGenAIService } from "./BaseGenAIService";
-import { Type } from "@google/genai";
-import { Logger, GeminiApiError, ValidationError } from "../utils/Logger";
+import { BaseGenAIService } from './BaseGenAIService';
+import { Type } from '@google/genai';
+import { Logger, GeminiApiError, ValidationError } from '../utils/Logger';
+import type { Part } from '@google/genai';
+import type { StructuredOutputConfig } from '../types/types';
 
 export class StructuredOutputService extends BaseGenAIService {
   constructor(apiKey: string) {
@@ -19,18 +21,20 @@ export class StructuredOutputService extends BaseGenAIService {
     contents,
     config,
   }: {
-    model: string,
-    contents: string | any[],
-    config: {
-      responseMimeType: "application/json" | "text/x.enum",
-      responseSchema: any,
-      [key: string]: any,
-    },
+    model: string;
+    contents: string | Part[];
+    config: StructuredOutputConfig;
   }): Promise<string> {
     try {
       if (!model || !contents || !config || !config.responseMimeType || !config.responseSchema) {
-        Logger.error('StructuredOutputService.generateStructuredOutput: Missing required params', { model, contents, config });
-        throw new ValidationError('model, contents, responseMimeType, and responseSchema are required');
+        Logger.error('StructuredOutputService.generateStructuredOutput: Missing required params', {
+          model,
+          contents,
+          config,
+        });
+        throw new ValidationError(
+          'model, contents, responseMimeType, and responseSchema are required',
+        );
       }
       const response = await this.genAI.models.generateContent({
         model,
@@ -48,4 +52,4 @@ export class StructuredOutputService extends BaseGenAIService {
    * Expose Type enum for convenience.
    */
   static Type = Type;
-} 
+}

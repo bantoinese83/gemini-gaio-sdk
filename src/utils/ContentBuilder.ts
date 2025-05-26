@@ -1,3 +1,5 @@
+import type { Part } from '@google/genai';
+
 export class ContentBuilder {
   static buildTextPart(text: string) {
     return { text };
@@ -12,15 +14,21 @@ export class ContentBuilder {
     };
   }
 
-  static buildMultimodalParts(text: string, files: Array<{ data: string, mimeType: string }>): any[] {
-    const parts: any[] = [this.buildTextPart(text)];
+  static buildMultimodalParts(
+    text: string,
+    files: Array<{ data: string; mimeType: string }>,
+  ): Part[] {
+    const parts: Part[] = [this.buildTextPart(text) as Part];
     for (const file of files) {
-      parts.push(this.buildInlineDataPart(file.data, file.mimeType));
+      parts.push(this.buildInlineDataPart(file.data, file.mimeType) as Part);
     }
     return parts;
   }
 
-  static buildPartsFromPromptAndFiles(prompt: string, files: Array<{ data: string, mimeType: string }>): any[] {
+  static buildPartsFromPromptAndFiles(
+    prompt: string,
+    files: Array<{ data: string; mimeType: string }>,
+  ): Part[] {
     return this.buildMultimodalParts(prompt, files);
   }
-} 
+}
